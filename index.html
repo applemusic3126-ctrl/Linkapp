@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe Link Gate</title>
+    <!-- Official Telegram WebApp script wrapper -->
+    <script src="https://telegram.org"></script>
+    
+    <!-- Monetag Telegram Mini App SDK Core -->
+    <script src="https://tgapp-sdk.com"></script> 
+</head>
+<body style="background-color: #17212b; color: white; font-family: sans-serif; text-align: center; padding: 20px;">
+
+    <div style="margin-top: 35%;">
+        <h2 style="color: #4ba3e3;">🔗 File Processing...</h2>
+        <p id="status-text">Scanning link for destination routing safety...</p>
+        
+        <!-- Redirect CTA button (hidden until ad closes) -->
+        <button id="action-btn" onclick="openTarget()" style="display:none; background-color: #2481cc; color: white; border: none; padding: 15px 30px; font-size: 16px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+            🚀 Continue to Destination
+        </button>
+    </div>
+
+    <script>
+        // Init Telegram WebView 
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); 
+
+        // Extract parameters. In TMA startapp parameters are passed in tg.initDataUnsafe.start_param
+        let targetUrl = "https://google.com";
+        if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+            targetUrl = decodeURIComponent(tg.initDataUnsafe.start_param);
+        } else {
+            // Fallback for testing directly in a desktop browser tab
+            const urlParams = new URLSearchParams(window.location.search);
+            if(urlParams.get('url')) targetUrl = decodeURIComponent(urlParams.get('url'));
+        }
+
+        window.onload = function() {
+            document.getElementById("status-text").innerText = "Verifying view panel...";
+            
+            // Fire the Monetag In-App Interstitial Ad safely inside Telegram frame
+            if (typeof MonetagTMA !== "undefined") {
+                MonetagTMA.showAd({
+                    zoneId: "YOUR_MONETAG_ZONE_ID_HERE", // ⚠️ REPLACE THIS WITH YOUR ACTUAL ZONE ID
+                    onClose: function() {
+                        showDestinationButton();
+                    },
+                    onError: function(err) {
+                        showDestinationButton(); // Force fallback safety access if ad fails
+                    }
+                });
+            } else {
+                showDestinationButton();
+            }
+        };
+
+        function showDestinationButton() {
+            document.getElementById("status-text").style.display = "none";
+            document.getElementById("action-btn").style.display = "inline-block";
+        }
+
+        function openTarget() {
+            tg.openLink(targetUrl); // Opens final link in phone's main browser
+            tg.close(); // Smoothly closes the Telegram Web App window
+        }
+    </script>
+</body>
+</html>
